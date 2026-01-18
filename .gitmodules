@@ -1,0 +1,3 @@
+[submodule "chatbot-sud"]
+	path = chatbot-sud
+	url = https://github.com/YNJ05/chatbot-sud
