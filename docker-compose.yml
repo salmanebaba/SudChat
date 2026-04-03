@@ -1,0 +1,32 @@
+services:
+  # 1. Your Backend Application
+  backend:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - OLLAMA_URL=${OLLAMA_URL}
+      - OLLAMA_MODEL=${OLLAMA_MODEL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-60m}
+      - BCRYPT_ROUNDS=${BCRYPT_ROUNDS:-10}
+      - CHAT_TITLE_LENGTH=${CHAT_TITLE_LENGTH:-30}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # 2. The MongoDB Database
+  mongo:
+    image: mongo:latest
+    command: ["--quiet"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
