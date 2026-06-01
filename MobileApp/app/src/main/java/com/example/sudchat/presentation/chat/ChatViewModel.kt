@@ -38,6 +38,10 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun onModelSelected(model: String) {
+        _state.value = _state.value.copy(selectedModel = model)
+    }
+
     fun loadConversations() {
         viewModelScope.launch {
             val result = chatRepository.getConversations()
@@ -113,7 +117,11 @@ class ChatViewModel @Inject constructor(
         _state.value = _state.value.copy(messages = currentMessages, isLoading = true)
 
         viewModelScope.launch {
-            val result = chatRepository.sendMessage(text, _state.value.currentConversationId)
+            val result = chatRepository.sendMessage(
+                text, 
+                _state.value.currentConversationId,
+                _state.value.selectedModel
+            )
             val updatedMessages = _state.value.messages.toMutableList()
             
             if (result.isSuccess) {

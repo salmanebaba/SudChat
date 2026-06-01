@@ -11,17 +11,17 @@ services:
     environment:
       - MONGO_URI=${MONGO_URI}
       - OLLAMA_URL=${OLLAMA_URL}
-      - OLLAMA_MODEL=${OLLAMA_MODEL}
+      #- OLLAMA_MODEL=${OLLAMA_MODEL}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-60m}
       - BCRYPT_ROUNDS=${BCRYPT_ROUNDS:-10}
       - CHAT_TITLE_LENGTH=${CHAT_TITLE_LENGTH:-30}
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "ollama-host:host-gateway"
 
   # 2. The MongoDB Database
   mongo:
-    image: mongo:latest
+    image: mongo:7
     command: ["--quiet"]
     ports:
       - "27017:27017"

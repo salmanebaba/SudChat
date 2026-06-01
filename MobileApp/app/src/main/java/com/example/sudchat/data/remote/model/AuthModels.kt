@@ -16,7 +16,8 @@ data class AuthResponse(
 // What we send to Chat
 data class ChatRequest(
     val message: String,
-    val conversationId: String? = null
+    val conversationId: String? = null,
+    val model: String? = "auto"
 )
 
 // What we get back from Chat

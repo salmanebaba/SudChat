@@ -8,7 +8,7 @@ import { ChatModule } from './chat/chat.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: '../.env',
     }),
     MongooseModule.forRoot(process.env.MONGO_URI || 'mongodb://mongo:27017/ollama_chat'),
     AuthModule,

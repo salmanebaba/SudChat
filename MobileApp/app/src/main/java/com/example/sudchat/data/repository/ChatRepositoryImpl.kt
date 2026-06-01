@@ -7,9 +7,9 @@ import javax.inject.Inject
 class ChatRepositoryImpl @Inject constructor(
     private val api: ChatApi
 ) : ChatRepository {
-    override suspend fun sendMessage(message: String, conversationId: String?): Result<ChatResponse> {
+    override suspend fun sendMessage(message: String, conversationId: String?, model: String?): Result<ChatResponse> {
         return try {
-            val response = api.sendMessage(ChatRequest(message, conversationId))
+            val response = api.sendMessage(ChatRequest(message, conversationId, model))
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)

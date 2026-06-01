@@ -17,6 +17,15 @@ export class Chat extends Document {
 
   @Prop()
   aiModel: string;
+
+  @Prop()
+  responseTimeMs: number;
+
+  @Prop()
+  domain: string;
+
+  @Prop()
+  complexity: string;
 }
 
 export const ChatSchema = SchemaFactory.createForClass(Chat);

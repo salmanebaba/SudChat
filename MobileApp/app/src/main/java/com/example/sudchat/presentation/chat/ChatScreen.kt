@@ -1,22 +1,26 @@
 package com.example.sudchat.presentation.chat
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.sudchat.presentation.navigation.Screen
 import kotlinx.coroutines.launch
@@ -28,12 +32,10 @@ fun ChatScreen(
     navController: NavController
 ) {
     val state by viewModel.state
-    
-    var inputText by remember { mutableStateOf("") }
-    
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    var inputText by remember { mutableStateOf("") }
 
     // Redirect to Login if logged out
     LaunchedEffect(state.isLoggedIn) {
@@ -44,6 +46,7 @@ fun ChatScreen(
         }
     }
 
+    // Auto-scroll to bottom on new messages
     LaunchedEffect(state.messages.size) {
         if (state.messages.isNotEmpty()) {
             listState.animateScrollToItem(state.messages.size - 1)
@@ -54,15 +57,20 @@ fun ChatScreen(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
+                Spacer(Modifier.height(12.dp))
                 Text(
-                    "History", 
-                    modifier = Modifier.padding(16.dp), 
-                    style = MaterialTheme.typography.titleMedium
+                    "SudChat",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 )
-                HorizontalDivider()
-                
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
                 NavigationDrawerItem(
-                    label = { Text("New Chat +") },
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    label = { Text("Nouvelle Conversation") },
                     selected = state.currentConversationId == null,
                     onClick = {
                         viewModel.startNewChat()
@@ -71,15 +79,22 @@ fun ChatScreen(
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
 
+                Text(
+                    "Récents",
+                    modifier = Modifier.padding(start = 28.dp, top = 16.dp, bottom = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.outline
+                )
+
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(state.conversations) { chat ->
                         NavigationDrawerItem(
-                            label = { 
+                            label = {
                                 Text(
-                                    text = if (chat.title.isNotBlank()) chat.title else if (chat.lastMessage.isNotBlank()) chat.lastMessage else "New Conversation",
+                                    text = if (chat.title.isNotBlank()) chat.title else "Discussion",
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
-                                ) 
+                                )
                             },
                             selected = chat.id == state.currentConversationId,
                             onClick = {
@@ -90,27 +105,69 @@ fun ChatScreen(
                         )
                     }
                 }
-                
-                HorizontalDivider()
+
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
                 NavigationDrawerItem(
                     icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null) },
-                    label = { Text("Logout") },
+                    label = { Text("Déconnexion") },
                     selected = false,
-                    onClick = {
-                        viewModel.logout()
-                        // Navigation is now handled by LaunchedEffect
-                    },
+                    onClick = { viewModel.logout() },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
             }
         }
     ) {
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = { Text("SudChat") },
+                CenterAlignedTopAppBar(
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    ),
+                    title = {
+                        var showMenu by remember { mutableStateOf(false) }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "SudChat",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            )
+                            Surface(
+                                onClick = { showMenu = true },
+                                color = Color.Transparent,
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        state.selectedModel.uppercase(),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Icon(
+                                        Icons.Default.ArrowDropDown,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = showMenu,
+                                    onDismissRequest = { showMenu = false }
+                                ) {
+                                    val models = listOf("complex", "auto", "mistral", "gemma3", "gemma4")
+                                    models.forEach { model ->
+                                        DropdownMenuItem(
+                                            text = { Text(model.uppercase()) },
+                                            onClick = {
+                                                viewModel.onModelSelected(model)
+                                                showMenu = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menu")
@@ -128,15 +185,15 @@ fun ChatScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
             ) {
-
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
-                    reverseLayout = false
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(state.messages) { messagePair ->
                         val (text, isUser) = messagePair
@@ -144,34 +201,80 @@ fun ChatScreen(
                     }
                 }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // Input Bar - Real Chat Style
+                Surface(
+                    tonalElevation = 8.dp,
+                    shadowElevation = 8.dp,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    OutlinedTextField(
-                        value = inputText,
-                        onValueChange = { inputText = it },
-                        placeholder = { Text("Ask something...") },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    IconButton(
-                        onClick = {
-                            if (inputText.isNotBlank()) {
-                                viewModel.sendMessage(inputText)
-                                inputText = ""
-                            }
-                        },
-                        enabled = !state.isLoading
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp, vertical = 12.dp)
+                            .navigationBarsPadding()
+                            .imePadding(),
+                        verticalAlignment = Alignment.Bottom
                     ) {
-                        if (state.isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                        } else {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+                        IconButton(
+                            onClick = { /* Plus options if needed */ },
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.AddCircleOutline,
+                                contentDescription = "Plus",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        TextField(
+                            value = inputText,
+                            onValueChange = { inputText = it },
+                            placeholder = { Text("Message...") },
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(24.dp)),
+                            colors = TextFieldDefaults.colors(
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                disabledIndicatorColor = Color.Transparent,
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                            ),
+                            maxLines = 6
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        val isEnabled = inputText.isNotBlank() && !state.isLoading
+                        FilledIconButton(
+                            onClick = {
+                                if (inputText.isNotBlank()) {
+                                    viewModel.sendMessage(inputText)
+                                    inputText = ""
+                                }
+                            },
+                            enabled = isEnabled,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .padding(bottom = 4.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            if (state.isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Send,
+                                    contentDescription = "Send",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -182,23 +285,32 @@ fun ChatScreen(
 
 @Composable
 fun ChatBubble(text: String, isUser: Boolean) {
+    val bubbleColor = if (isUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+    val textColor = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+    val shape = if (isUser) {
+        RoundedCornerShape(20.dp, 20.dp, 4.dp, 20.dp)
+    } else {
+        RoundedCornerShape(20.dp, 20.dp, 20.dp, 4.dp)
+    }
+
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = if (isUser) Alignment.CenterEnd else Alignment.CenterStart
     ) {
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = if (isUser) MaterialTheme.colorScheme.primary else Color.LightGray
-            ),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .padding(4.dp)
-                .widthIn(max = 280.dp)
+        Surface(
+            color = bubbleColor,
+            shape = shape,
+            tonalElevation = if (isUser) 2.dp else 0.dp,
+            shadowElevation = 1.dp
         ) {
             Text(
                 text = text,
-                color = if (isUser) Color.White else Color.Black,
-                modifier = Modifier.padding(12.dp)
+                color = textColor,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = 16.sp,
+                    lineHeight = 22.sp
+                )
             )
         }
     }

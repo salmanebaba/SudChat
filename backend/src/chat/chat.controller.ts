@@ -10,8 +10,8 @@ export class ChatController {
 
   @UseGuards(JwtAuthGuard)
   @Post('send')
-  async sendMessage(@Request() req, @Body() body: { message: string; conversationId?: string }) {
-    return this.chatService.sendMessage(req.user.email, body.message, body.conversationId);
+  async sendMessage(@Request() req, @Body() body: { message: string; conversationId?: string; model?: string }) {
+    return this.chatService.sendMessage(req.user.email, body.message, body.conversationId, body.model);
   }
 
   @UseGuards(JwtAuthGuard)
