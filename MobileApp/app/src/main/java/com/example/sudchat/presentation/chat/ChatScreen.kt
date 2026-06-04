@@ -154,7 +154,7 @@ fun ChatScreen(
                                     expanded = showMenu,
                                     onDismissRequest = { showMenu = false }
                                 ) {
-                                    val models = listOf("complex", "auto", "mistral", "gemma3", "gemma4")
+                                    val models = listOf("complex", "auto", "llama3.1", "qwen2.5-coder", "phi4")
                                     models.forEach { model ->
                                         DropdownMenuItem(
                                             text = { Text(model.uppercase()) },
